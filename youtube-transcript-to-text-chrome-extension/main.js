@@ -208,6 +208,7 @@ function makeHtml(textObjects) {
         html += item.text + ' ';
     })
 
-    html += `</p></body></html>`
+    html += `</p></body></html>`;
+
     return html;
 }
