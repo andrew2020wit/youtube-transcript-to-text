@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Save YouTube Transcript as a formated text file",
+  "version": "1.0.1",
+  "description": "Save YouTube Transcript as a formated text file",
+  "icons": {
+    "48": "icons/icon-48.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/watch*"],
+      "js": ["main.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
