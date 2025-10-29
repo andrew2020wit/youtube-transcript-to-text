@@ -169,13 +169,21 @@ function makeHtml(textObjects) {
         body {
             margin: auto;
             max-width: 600px;
+            font-family: "Segoe UI", roboto, verdana, sans-serif;
+            background-color: hsl(0 0% 90%);
+        }
+        
+        p {
+            margin: 8px 0;
         }
         
         .time {
             color: #888;
+            font-size: small;
         }
         
         .text {
+            font-size: large;
         }
         
         </style>
@@ -186,7 +194,7 @@ function makeHtml(textObjects) {
 
     let lastTimestamp = 0;
 
-    html += '<p>';
+    html += '<p class="text">';
 
     textObjects.forEach(item => {
         const times = item.time.split(':').map(x => +x);
