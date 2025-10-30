@@ -2,17 +2,20 @@ const transcriptHtmlElementSelector = 'ytd-engagement-panel-section-list-rendere
 const downloadHtmlElementId = 'youtube-transcript-to-text-chrome-extension-download';
 const newTabHtmlElementId = 'youtube-transcript-to-text-chrome-extension-new-tab';
 const timestampIntervalSec = 15;
+const buttonsId = newTabHtmlElementId + '-' + downloadHtmlElementId;
 
-const downloadSvg = `
-			<div style="width: 100%; height: 100%; display: block; fill: currentcolor;">
-<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg>
+const buttonsHtml = `
+          <div style="display: flex; align-items: center; gap: 8px; margin: 4px;">
+			<div id="${newTabHtmlElementId}" 
+			style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v80H200v560h560v-240h80v240q0 33-23.5 56.5T760-120H200Zm440-400v-120H520v-80h120v-120h80v120h120v80H720v120h-80Z"/></svg>
 			</div>
-`;
-
-const newPageSvg = `
-			<div style="width: 100%; height: 100%; display: block; fill: currentcolor;">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v80H200v560h560v-240h80v240q0 33-23.5 56.5T760-120H200Zm440-400v-120H520v-80h120v-120h80v120h120v80H720v120h-80Z"/></svg>
+    
+    		<div id="${downloadHtmlElementId}" 
+    		style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
+               <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg>
 			</div>
+          </div>
 `;
 
 new MutationObserver(function(mutationsList, observer) {
@@ -21,54 +24,24 @@ new MutationObserver(function(mutationsList, observer) {
 			continue;
         }
 
-		const transcriptHtmlElement = document.querySelector(transcriptHtmlElementSelector);
-		const transcriptHeaderHtmlElement = transcriptHtmlElement.querySelector("div#header").querySelector("div#header");
-		const menuIconHtmlElement = transcriptHeaderHtmlElement.querySelector("div#menu");
+        const transcriptHtmlElement = document.querySelector(transcriptHtmlElementSelector);
 
-        // download button
-
-        const oldDownloadHtmlElement = document.getElementById(downloadHtmlElementId);
-
-        if (oldDownloadHtmlElement) {
-            oldDownloadHtmlElement.remove();
+        const oldButtonsElement = document.getElementById(buttonsId);
+        if (oldButtonsElement) {
+            oldButtonsElement.remove();
         }
 
-        const downloadHtmlElement = document.createElement("div");
-		downloadHtmlElement.id = downloadHtmlElementId;
-        downloadHtmlElement.style.cursor = "pointer";
-        downloadHtmlElement.style.width = "24px";
-        downloadHtmlElement.style.height = "24px";
-        downloadHtmlElement.style.margin = "0 8px";
+        const buttonsElement = document.createElement("div");
+        buttonsElement.id = buttonsId;
 
+        transcriptHtmlElement.before(buttonsElement);
+        buttonsElement.insertAdjacentHTML( "beforeend", buttonsHtml);
 
-        transcriptHeaderHtmlElement.insertBefore(downloadHtmlElement, menuIconHtmlElement);
-
-        downloadHtmlElement.insertAdjacentHTML( "beforeend", downloadSvg);
-
-        downloadHtmlElement.addEventListener("click", ()=> {
+        document.getElementById(downloadHtmlElementId).addEventListener("click", ()=> {
             clickToDownload(transcriptHtmlElement);
         });
 
-        // newTab button
-
-        const oldNewTabHtmlElement = document.getElementById(newTabHtmlElementId);
-
-        if (oldNewTabHtmlElement) {
-            oldNewTabHtmlElement.remove();
-        }
-
-        const newTabHtmlElement = document.createElement("div");
-        newTabHtmlElement.id = newTabHtmlElementId;
-        newTabHtmlElement.style.cursor = "pointer";
-        newTabHtmlElement.style.width = "24px";
-        newTabHtmlElement.style.height = "24px";
-        downloadHtmlElement.style.margin = "0 8px";
-
-        transcriptHeaderHtmlElement.insertBefore(newTabHtmlElement, menuIconHtmlElement);
-
-        newTabHtmlElement.insertAdjacentHTML("beforeend", newPageSvg);
-
-        newTabHtmlElement.addEventListener("click", ()=> {
+        document.getElementById(newTabHtmlElementId).addEventListener("click", ()=> {
             clickToNewTab(transcriptHtmlElement);
         });
 
@@ -188,7 +161,7 @@ function makeHtml(textObjects) {
         
         </style>
 
-        </head><body>`;
+        </head><body class="youtube-transcript-to-text-chrome-extension">`;
 
     html += `<h1> <a href="${window.location.href}" target="_blank"> ${document.title} </a> </h1>`;
 
