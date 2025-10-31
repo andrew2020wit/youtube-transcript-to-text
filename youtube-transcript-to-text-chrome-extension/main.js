@@ -51,16 +51,9 @@ new MutationObserver(function(mutationsList, observer) {
 
 function clickToNewTab(transcriptHtmlElement) {
     const textObjects = parser(transcriptHtmlElement);
-    const text = makeHtml(textObjects);
+    const html = makeHtml(textObjects);
 
-    const newWindow = window.open('', '_blank');
-
-    if (newWindow) { // Check if the window was successfully opened
-        newWindow.document.write(text);
-        newWindow.document.close(); // Close the document to ensure content is rendered
-    } else {
-        alert('Could not open new tab. Please allow pop-ups for this site.');
-    }
+    openHtmlWithBlob(html);
 }
 
 function clickToDownload(transcriptHtmlElement) {
@@ -184,4 +177,20 @@ function makeHtml(textObjects) {
     html += `</p></body></html>`;
 
     return html;
+}
+
+function openHtmlWithBlob(html) {
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+
+    if (!win) {
+        console.warn('Popup blocked');
+        URL.revokeObjectURL(url);
+        return;
+    }
+
+    win.addEventListener('load', () => {
+        URL.revokeObjectURL(url);
+    }, { once: true });
 }

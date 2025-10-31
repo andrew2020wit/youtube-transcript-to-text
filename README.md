@@ -1,6 +1,12 @@
-# Chrome extension: Save YouTube Transcript as a formated text file
+# Save YouTube Transcript as a formated text file
+
+## Chrome extension: Save YouTube Transcript as a formated text file
 
 [chromewebstore](https://chromewebstore.google.com/detail/save-youtube-transcript-a/cmahblfkoacaigpfdefeoapecbccogoo)
+
+## Firefox extension: Save YouTube Transcript as a formated text file
+
+todo: publish for firefox
 
 ## Functionality
 
