@@ -161,7 +161,7 @@ function makeHtml(textObjects) {
         
         </style>
 
-        </head><body class="youtube-transcript-to-text-chrome-extension">`;
+        </head><body class="youtube-transcript-to-text-extension">`;
 
     html += `<h1> <a href="${window.location.href}" target="_blank"> ${document.title} </a> </h1>`;
 
