@@ -20,9 +20,7 @@ Use them only after you see the transcript.
 
 ## Screenshots
 
-![1.png](screens/1/1-21.jpg)
-
-![1.png](screens/1/1-22.jpg)
+![1.png](screens/1/1.jpg)
 
 ![2.png](screens/1/2.png)
 
