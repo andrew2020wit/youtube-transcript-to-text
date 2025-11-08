@@ -6,7 +6,7 @@
 
 ## Firefox extension: Save YouTube Transcript as a formated text file
 
-todo: publish for firefox
+[addons.mozilla.org](https://addons.mozilla.org/ru/firefox/addon/youtube-transcript-to-text/)
 
 ## Functionality
 
