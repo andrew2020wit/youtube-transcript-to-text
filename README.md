@@ -24,8 +24,6 @@ Use them only after you see the transcript.
 - If you go from one page to another two buttons may disappear. Reload the page in this case. 
 - You must click on "show video text" to see translation before click on this button.
 
-I created it for myself and at the moment I am quite pleased with the result, and I'm not going to spend my time to improve it.
-
 ## Screenshots
 
 ![1.png](screens/1/1.jpg)
