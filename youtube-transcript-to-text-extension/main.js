@@ -4,6 +4,9 @@ const newTabHtmlElementId = 'youtube-transcript-to-text-chrome-extension-new-tab
 const timestampIntervalSec = 15;
 const buttonsId = newTabHtmlElementId + '-' + downloadHtmlElementId;
 
+const chaptersContainerSelector = 'ytd-macro-markers-list-renderer[panel-target-id=engagement-panel-macro-markers-description-chapters]';
+const chapterSelector = 'ytd-macro-markers-list-item-renderer';
+
 const buttonsHtml = `
           <div style="display: flex; align-items: center; gap: 8px; margin: 4px;">
 			<div id="${newTabHtmlElementId}" 
@@ -18,10 +21,10 @@ const buttonsHtml = `
           </div>
 `;
 
-new MutationObserver(function(mutationsList, observer) {
+new MutationObserver(function (mutationsList, observer) {
     for (const mutation of mutationsList) {
         if (mutation.target.getAttribute("target-id") !== "engagement-panel-searchable-transcript") {
-			continue;
+            continue;
         }
 
         const transcriptHtmlElement = document.querySelector(transcriptHtmlElementSelector);
@@ -35,31 +38,43 @@ new MutationObserver(function(mutationsList, observer) {
         buttonsElement.id = buttonsId;
 
         transcriptHtmlElement.before(buttonsElement);
-        buttonsElement.insertAdjacentHTML( "beforeend", buttonsHtml);
+        buttonsElement.insertAdjacentHTML("beforeend", buttonsHtml);
 
-        document.getElementById(downloadHtmlElementId).addEventListener("click", ()=> {
+        document.getElementById(downloadHtmlElementId).addEventListener("click", () => {
             clickToDownload(transcriptHtmlElement);
         });
 
-        document.getElementById(newTabHtmlElementId).addEventListener("click", ()=> {
+        document.getElementById(newTabHtmlElementId).addEventListener("click", () => {
             clickToNewTab(transcriptHtmlElement);
         });
 
-		observer.disconnect();
-	}
-}).observe(document.body, {childList: true, subtree: true });
+        observer.disconnect();
+    }
+}).observe(document.body, {childList: true, subtree: true});
 
 function clickToNewTab(transcriptHtmlElement) {
-    const textObjects = parser(transcriptHtmlElement);
-    const html = makeHtml(textObjects);
+    const transcriptObjects = transcriptParser(transcriptHtmlElement);
+
+    const chaptersObjs = chaptersParser();
+
+    const data = joinData(transcriptObjects, chaptersObjs);
+
+    const html = makeHtml(data);
 
     openHtmlWithBlob(html);
 }
 
 function clickToDownload(transcriptHtmlElement) {
-    const textObjects = parser(transcriptHtmlElement);
-    const text = makeFormatedText(textObjects);
-    const fileName = document.title + '.txt';
+    const transcriptObjects = transcriptParser(transcriptHtmlElement);
+
+    const chaptersObjs = chaptersParser();
+
+    const data = joinData(transcriptObjects, chaptersObjs);
+
+    const text = makeFormatedText(data);
+
+    const fileName = document.title + '.md';
+
     saveTxtToFile(text, fileName);
 }
 
@@ -69,8 +84,9 @@ function clickToDownload(transcriptHtmlElement) {
  * @param {HTMLElement} transcriptHtmlElement - The root element of the transcript panel to parse.
  * @returns {{time: string, text: string}[]} An array of transcript segments with their timestamp label and text.
  */
-function parser(transcriptHtmlElement) {
-    const result = [];
+function transcriptParser(transcriptHtmlElement) {
+    const result1 = [];
+    const result2 = [];
 
     const transcriptSegments = transcriptHtmlElement.querySelectorAll("div#segments-container ytd-transcript-segment-renderer");
 
@@ -78,34 +94,91 @@ function parser(transcriptHtmlElement) {
         const time = segment.querySelector(".segment-timestamp").innerText.trim();
         const text = segment.querySelector("yt-formatted-string").innerText.trim();
 
-        result.push({ time, text });
+        result1.push({time, text});
+    });
+
+    let lastTimestamp = 0;
+    let lastTime = '';
+    let textChunk = ''
+
+    result1.forEach(item => {
+        const timestamp = timeStringToSecondNumber(item.time);
+        textChunk += item.text + ' ';
+
+        if (!lastTime) {
+            lastTime = item.time;
+        }
+
+        if (timestamp > lastTimestamp + timestampIntervalSec) {
+            result2.push({
+                time: lastTime,
+                text: textChunk
+            });
+
+            lastTimestamp = timestamp;
+            lastTime = '';
+            textChunk = '';
+        }
+    })
+
+    if (textChunk) {
+        result2.push({
+            time: lastTime,
+            text: textChunk
+        });
+    }
+
+    return result2;
+}
+
+/**
+ * @returns {{time: string, text: string, link: string}[]}
+ */
+function chaptersParser() {
+    const result = [];
+
+    const container = document.querySelector(chaptersContainerSelector);
+
+    if (!container) {
+        return [];
+    }
+
+    const chapters = container.querySelectorAll(chapterSelector);
+
+    chapters.forEach(chapter => {
+        const link = chapter.querySelector("a#endpoint")?.getAttribute("href")?.trim();
+        const text = chapter.querySelector("div#details h4")?.innerText.trim();
+        const time = chapter.querySelector("div#details div#time")?.innerText.trim();
+
+        result.push({link, text, time});
     });
 
     return result;
 }
 
 /**
- * @param {{time: string, text: string}[]} textObjects
+ * @param {{isChapter: boolean, chapterId?: number, time: string, timeSecond: number, text: string, link: string}[]} data
  * @returns {string}
  */
-function makeFormatedText(textObjects) {
+function makeFormatedText(data) {
     const title = document.title.replace(' - YouTube', '');
-    const url = window.location.href;
+    const baseUrl = getBaseUrl();
 
-    let result = title + "\n" + url + "\n\n";
+    let result = '# ' +  title + '\n\n';
 
-    let lastTimestamp = 0;
+    result += '[' + baseUrl + '](' + baseUrl + ")\n\n";
 
-    textObjects.forEach(item => {
-        const times = item.time.split(':').map(x => +x);
-        const timestamp = (times.at(-3) || 0) * 60 * 60 + (times.at(-2) || 0)  * 60 + times.at(-1); // hours / minutes / seconds
+    data.forEach(item => {
+        let text = '';
 
-        if (timestamp > lastTimestamp + timestampIntervalSec) {
-            lastTimestamp = timestamp;
-            result += '\n\n' + '[' + item.time + '] ' + '\n';
+        if (item.isChapter) {
+            text = '## ' + item.text + '\n\n';
+        } else {
+            text = `[${item.time}](${baseUrl + '&t=' + item.timeSecond}s)` + '\n\n'
+                + item.text  + '\n\n';
         }
 
-        result += item.text + ' ';
+        result += text;
     })
 
     return result;
@@ -114,7 +187,7 @@ function makeFormatedText(textObjects) {
 function saveTxtToFile(content, fileName) {
     const contentType = 'text/plain';
     const a = document.createElement('a');
-    const file = new Blob([content], { type: contentType });
+    const file = new Blob([content], {type: contentType});
     a.href = URL.createObjectURL(file);
     a.download = fileName;
     a.click();
@@ -122,10 +195,11 @@ function saveTxtToFile(content, fileName) {
 }
 
 /**
- * @param {{time: string, text: string}[]} textObjects
+ * @param {{isChapter: boolean, chapterId?: number, time: string, timeSecond: number, text: string, link: string}[]} data
  * @returns {string}
  */
-function makeHtml(textObjects) {
+function makeHtml(data) {
+    const baseUrl = getBaseUrl();
 
     let html = `<!doctype html>
         <html><head>
@@ -156,31 +230,42 @@ function makeHtml(textObjects) {
 
         </head><body class="youtube-transcript-to-text-extension">`;
 
-    html += `<h1> <a href="${window.location.href}" target="_blank"> ${document.title} </a> </h1>`;
+    html += `<h1> <a href="${baseUrl}" target="_blank"> ${document.title} </a> </h1>`;
 
-    let lastTimestamp = 0;
+    const hostname = window.location.hostname;
 
-    html += '<p class="text">';
+    // page navigation
 
-    textObjects.forEach(item => {
-        const times = item.time.split(':').map(x => +x);
-        const timestamp = (times.at(-3) || 0) * 60 * 60 + (times.at(-2) || 0)  * 60 + times.at(-1); // hours / minutes / seconds
+    const chapters = data.filter(item => item.isChapter);
 
-        if (timestamp > lastTimestamp + timestampIntervalSec) {
-            lastTimestamp = timestamp;
-            html += '</p><p class="time">[' + item.time + ']</p><p class="text">';
+    const chapterIdPrefix = 'chapter-';
+
+    if (chapters.length > 0) {
+        html += `<ol class="page-navigation">`;
+        chapters.forEach((chapter) => {
+            html += `<li> <a href="#${chapterIdPrefix + chapter.chapterId}"> ${chapter.time + ': ' + chapter.text}</a> </li>`
+        })
+
+        html += `</ol>`;
+    }
+
+    // main part
+    data.forEach((item, index) => {
+        if (item.isChapter) {
+            html += `<h2 id="${chapterIdPrefix + item.chapterId}"> <a href="https://${hostname + item.link}" target="_blank"> ${item.text} </a></h2>`;
+        } else {
+            html += `<p class="time"> <a href="${baseUrl + '&t=' + item.timeSecond}s" target="_blank"> [${item.time || 0}] </a></p>`;
+            html += `<p class="text">${item.text}</p>`;
         }
-
-        html += item.text + ' ';
     })
 
-    html += `</p></body></html>`;
+    html += `</body></html>`;
 
     return html;
 }
 
 function openHtmlWithBlob(html) {
-    const blob = new Blob([html], { type: 'text/html' });
+    const blob = new Blob([html], {type: 'text/html'});
     const url = URL.createObjectURL(blob);
     const win = window.open(url, '_blank');
 
@@ -192,5 +277,80 @@ function openHtmlWithBlob(html) {
 
     win.addEventListener('load', () => {
         URL.revokeObjectURL(url);
-    }, { once: true });
+    }, {once: true});
+}
+
+/**
+ * @param {{time: string, text: string}[]} transcripts
+ * @param {{time: string, text: string, link: string}[]} chapters
+ * @returns {{isChapter: boolean, chapterId?: number, time: string, timeSecond: number, text: string, link: string}[]}
+ */
+function joinData(transcripts, chapters) {
+    const result = [];
+
+    const transcriptsTemp = [...transcripts];
+    const chaptersTemp = [...chapters];
+
+    let currentTranscriptTime = 0;
+    let currentChapterTime = 0;
+    let chapterId = 1;
+
+    while (transcriptsTemp.length) {
+        currentTranscriptTime = timeStringToSecondNumber(transcriptsTemp[0].time);
+        currentChapterTime = timeStringToSecondNumber(chaptersTemp[0]?.time);
+
+        if (chaptersTemp[0] && currentChapterTime <= currentTranscriptTime) {
+            result.push({
+                isChapter: true,
+                chapterId,
+                time: chaptersTemp[0].time,
+                timeSecond: timeStringToSecondNumber(chaptersTemp[0].time),
+                text: chaptersTemp[0].text,
+                link: chaptersTemp[0].link,
+            });
+            chapterId++;
+            chaptersTemp.shift();
+        }
+
+        result.push({
+            isChapter: false,
+            time: transcriptsTemp[0].time,
+            timeSecond: timeStringToSecondNumber(transcriptsTemp[0].time),
+            text: transcriptsTemp[0].text,
+            link: '',
+        });
+
+        transcriptsTemp.shift();
+    }
+
+    return result;
+}
+
+/**
+ * @param {string} time
+ * @returns {number}
+ */
+function timeStringToSecondNumber(time) {
+    if (!time) {
+        return 0;
+    }
+
+    const times = time.split(':').map(x => +x);
+
+    return (times.at(-3) || 0) * 60 * 60 + (times.at(-2) || 0) * 60 + times.at(-1); // hours / minutes / seconds
+}
+
+/**
+ * @returns {string}
+ */
+function getBaseUrl() {
+    let baseUrl = document.location.href;
+
+    const indexOfTime = baseUrl.indexOf('&t=');
+
+    if (indexOfTime !== -1) {
+        baseUrl = baseUrl.substring(0, indexOfTime);
+    }
+
+    return baseUrl;
 }
