@@ -1,6 +1,8 @@
 const transcriptHtmlElementSelector = 'ytd-engagement-panel-section-list-renderer[target-id=engagement-panel-searchable-transcript]';
 const downloadHtmlElementId = 'youtube-transcript-to-text-chrome-extension-download';
 const newTabHtmlElementId = 'youtube-transcript-to-text-chrome-extension-new-tab';
+const reloadButtonId = 'youtube-transcript-to-text-chrome-extension-reload-button';
+const showTranscriptionButtonSelector = '#button-container.ytd-video-description-transcript-section-renderer button';
 const timestampIntervalSec = 15;
 const buttonsId = newTabHtmlElementId + '-' + downloadHtmlElementId;
 
@@ -9,6 +11,11 @@ const chapterSelector = 'ytd-macro-markers-list-item-renderer';
 
 const buttonsHtml = `
           <div style="display: flex; align-items: center; gap: 8px; margin: 4px;">
+          	<div id="${reloadButtonId}" 
+			style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
+			</div>
+			
 			<div id="${newTabHtmlElementId}" 
 			style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v80H200v560h560v-240h80v240q0 33-23.5 56.5T760-120H200Zm440-400v-120H520v-80h120v-120h80v120h120v80H720v120h-80Z"/></svg>
@@ -39,6 +46,10 @@ new MutationObserver(function (mutationsList, observer) {
 
         transcriptHtmlElement.before(buttonsElement);
         buttonsElement.insertAdjacentHTML("beforeend", buttonsHtml);
+
+        document.getElementById(reloadButtonId).addEventListener("click", () => {
+            clickToLoadTranscript();
+        });
 
         document.getElementById(downloadHtmlElementId).addEventListener("click", () => {
             clickToDownload(transcriptHtmlElement);
@@ -76,6 +87,16 @@ function clickToDownload(transcriptHtmlElement) {
     const fileName = document.title + '.md';
 
     saveTxtToFile(text, fileName);
+}
+
+function clickToLoadTranscript() {
+    const button = document.querySelector(showTranscriptionButtonSelector);
+    if (!button) {
+        console.error('TranscriptToText Extension: clickToLoadTranscript: button not found.');
+        return;
+    }
+
+    button.click();
 }
 
 /**

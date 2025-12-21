@@ -12,6 +12,7 @@
 
 - Save YouTube Transcript as a formated text file (md file, you can use any text editor, or Visual Studio Code)
 - Open the transcript into a new tab to read it more conveniently
+- Add the load transcription button
 
 You have two extra buttons which may have different positions 
  (depending on video, above or below the transcript).
