@@ -223,7 +223,10 @@ function makeHtml(data) {
     const baseUrl = getBaseUrl();
 
     let html = `<!doctype html>
-        <html><head>
+        <html><head> <meta charset="UTF-8">
+        
+        <meta name="viewport" content="width=device-width">
+          
         <title> ${document.title} </title>
         <style>
         
