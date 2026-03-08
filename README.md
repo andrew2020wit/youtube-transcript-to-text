@@ -23,9 +23,11 @@ Use them only after you see the transcript.
 
 ## Limitations
 
-- Two extra buttons have different positions for videos with chapters (below the transcription) and without (above).
 - If you go from one page to another two buttons may disappear. Reload the page in this case. 
 - You must click on "show video text" to see translation before click on this button.
+- YouTube has different ways to show a transcript,
+  they can randomly change it for certain video (so it's difficult to test),
+  and they can invent a new one, so it might not work for some type of transcript. 
 
 ## Screenshots
 

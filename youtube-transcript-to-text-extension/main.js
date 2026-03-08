@@ -1,13 +1,7 @@
-const transcriptHtmlElementSelector = 'ytd-engagement-panel-section-list-renderer[target-id=engagement-panel-searchable-transcript]';
 const downloadHtmlElementId = 'youtube-transcript-to-text-chrome-extension-download';
 const newTabHtmlElementId = 'youtube-transcript-to-text-chrome-extension-new-tab';
 const reloadButtonId = 'youtube-transcript-to-text-chrome-extension-reload-button';
-const showTranscriptionButtonSelector = '#button-container.ytd-video-description-transcript-section-renderer button';
-const timestampIntervalSec = 15;
-const buttonsId = newTabHtmlElementId + '-' + downloadHtmlElementId;
-
-const chaptersContainerSelector = 'ytd-macro-markers-list-renderer[panel-target-id=engagement-panel-macro-markers-description-chapters]';
-const chapterSelector = 'ytd-macro-markers-list-item-renderer';
+const buttonsElementId = 'youtube-transcript-to-text-chrome-extension-buttons';
 
 const buttonsHtml = `
           <div style="display: flex; align-items: center; gap: 8px; margin: 4px;">
@@ -34,55 +28,47 @@ new MutationObserver(function (mutationsList, observer) {
             continue;
         }
 
-        const transcriptHtmlElement = document.querySelector(transcriptHtmlElementSelector);
-
-        const oldButtonsElement = document.getElementById(buttonsId);
-        if (oldButtonsElement) {
-            oldButtonsElement.remove();
-        }
-
-        const buttonsElement = document.createElement("div");
-        buttonsElement.id = buttonsId;
-
-        transcriptHtmlElement.before(buttonsElement);
-        buttonsElement.insertAdjacentHTML("beforeend", buttonsHtml);
-
-        document.getElementById(reloadButtonId).addEventListener("click", () => {
-            clickToLoadTranscript();
-        });
-
-        document.getElementById(downloadHtmlElementId).addEventListener("click", () => {
-            clickToDownload(transcriptHtmlElement);
-        });
-
-        document.getElementById(newTabHtmlElementId).addEventListener("click", () => {
-            clickToNewTab(transcriptHtmlElement);
-        });
+        addButtons();
 
         observer.disconnect();
     }
 }).observe(document.body, {childList: true, subtree: true});
 
-function clickToNewTab(transcriptHtmlElement) {
-    const transcriptObjects = transcriptParser(transcriptHtmlElement);
+function addButtons() {
+    const oldButtonsElement = document.getElementById(buttonsElementId);
+    if (oldButtonsElement) {
+        oldButtonsElement.remove();
+    }
 
-    const chaptersObjs = chaptersParser();
+    const buttonsElement = document.createElement("div");
+    buttonsElement.id = buttonsElementId;
 
-    const data = joinData(transcriptObjects, chaptersObjs);
+    const buttonsContainer = document.getElementById('panels');
 
-    const html = makeHtml(data);
+    buttonsContainer.prepend(buttonsElement);
+    buttonsElement.insertAdjacentHTML("beforeend", buttonsHtml);
+
+    document.getElementById(reloadButtonId).addEventListener("click", () => {
+        clickToLoadTranscript();
+    });
+
+    document.getElementById(downloadHtmlElementId).addEventListener("click", () => {
+        clickToDownload();
+    });
+
+    document.getElementById(newTabHtmlElementId).addEventListener("click", () => {
+        clickToNewTab();
+    });
+}
+
+function clickToNewTab() {
+    const html = makeHtml(getTranscript());
 
     openHtmlWithBlob(html);
 }
 
-function clickToDownload(transcriptHtmlElement) {
-    const transcriptObjects = transcriptParser(transcriptHtmlElement);
-
-    const chaptersObjs = chaptersParser();
-
-    const data = joinData(transcriptObjects, chaptersObjs);
-
-    const text = makeFormatedText(data);
+function clickToDownload() {
+    const text = makeFormatedText(getTranscript());
 
     const fileName = document.title + '.md';
 
@@ -90,7 +76,7 @@ function clickToDownload(transcriptHtmlElement) {
 }
 
 function clickToLoadTranscript() {
-    const button = document.querySelector(showTranscriptionButtonSelector);
+    const button = document.querySelector('#button-container.ytd-video-description-transcript-section-renderer button');
     if (!button) {
         console.error('TranscriptToText Extension: clickToLoadTranscript: button not found.');
         return;
@@ -99,30 +85,51 @@ function clickToLoadTranscript() {
     button.click();
 }
 
+// @returns {{isChapter: boolean, chapterId?: number, time: string, timeSecond: number, text: string, link: string}[]}
+function getTranscript() {
+    const transcriptObjects = transcriptParser();
+
+    const chaptersObjs = chaptersParser();
+
+   return joinData(zipTranscript(transcriptObjects), chaptersObjs);
+}
+
 /**
- * Parses the YouTube transcript panel DOM and returns an array of transcript entries.
- *
- * @param {HTMLElement} transcriptHtmlElement - The root element of the transcript panel to parse.
  * @returns {{time: string, text: string}[]} An array of transcript segments with their timestamp label and text.
  */
-function transcriptParser(transcriptHtmlElement) {
-    const result1 = [];
-    const result2 = [];
+function transcriptParser() {
+    const result = [];
 
-    const transcriptSegments = transcriptHtmlElement.querySelectorAll("div#segments-container ytd-transcript-segment-renderer");
+    const transcriptContainer = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id=engagement-panel-searchable-transcript]');
+
+    const transcriptSegments = transcriptContainer.querySelectorAll("div#segments-container ytd-transcript-segment-renderer");
 
     transcriptSegments.forEach(segment => {
         const time = segment.querySelector(".segment-timestamp").innerText.trim();
         const text = segment.querySelector("yt-formatted-string").innerText.trim();
 
-        result1.push({time, text});
+        result.push({time, text});
     });
+
+    return result;
+}
+
+
+/**
+ * Parses the YouTube transcript panel DOM and returns an array of transcript entries.
+ *
+ * @param {{time: string, text: string}[]} transcript
+ * @param {number} timestampIntervalSec
+ * @returns {{time: string, text: string}[]}
+ */
+function zipTranscript(transcript, timestampIntervalSec = 15) {
+    const result = [];
 
     let lastTimestamp = 0;
     let lastTime = '';
     let textChunk = ''
 
-    result1.forEach(item => {
+    transcript.forEach(item => {
         const timestamp = timeStringToSecondNumber(item.time);
         textChunk += item.text + ' ';
 
@@ -131,7 +138,7 @@ function transcriptParser(transcriptHtmlElement) {
         }
 
         if (timestamp > lastTimestamp + timestampIntervalSec) {
-            result2.push({
+            result.push({
                 time: lastTime,
                 text: textChunk
             });
@@ -143,13 +150,13 @@ function transcriptParser(transcriptHtmlElement) {
     })
 
     if (textChunk) {
-        result2.push({
+        result.push({
             time: lastTime,
             text: textChunk
         });
     }
 
-    return result2;
+    return result;
 }
 
 /**
@@ -158,13 +165,13 @@ function transcriptParser(transcriptHtmlElement) {
 function chaptersParser() {
     const result = [];
 
-    const container = document.querySelector(chaptersContainerSelector);
+    const container = document.querySelector('ytd-macro-markers-list-renderer[panel-target-id=engagement-panel-macro-markers-description-chapters]');
 
     if (!container) {
         return [];
     }
 
-    const chapters = container.querySelectorAll(chapterSelector);
+    const chapters = container.querySelectorAll('ytd-macro-markers-list-item-renderer');
 
     chapters.forEach(chapter => {
         const link = chapter.querySelector("a#endpoint")?.getAttribute("href")?.trim();
@@ -185,7 +192,7 @@ function makeFormatedText(data) {
     const title = document.title.replace(' - YouTube', '');
     const baseUrl = getBaseUrl();
 
-    let result = '# ' +  title + '\n\n';
+    let result = '# ' + title + '\n\n';
 
     result += '[' + baseUrl + '](' + baseUrl + ")\n\n";
 
@@ -196,7 +203,7 @@ function makeFormatedText(data) {
             text = '## ' + item.text + '\n\n';
         } else {
             text = `[${item.time}](${baseUrl + '&t=' + item.timeSecond}s)` + '\n\n'
-                + item.text  + '\n\n';
+                + item.text + '\n\n';
         }
 
         result += text;
