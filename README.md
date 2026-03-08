@@ -15,11 +15,7 @@ https://youtu.be/3clVUVhE4jA
 - Save YouTube Transcript as a formated text file (md file, you can use any text editor, or Visual Studio Code)
 - Open the transcript into a new tab to read it more conveniently
 - Add the load transcription button
-
-You have two extra buttons which may have different positions 
- (depending on video, above or below the transcript).
-
-Use them only after you see the transcript.
+- add a button to double YouTube speed
 
 ## Limitations
 
@@ -28,6 +24,8 @@ Use them only after you see the transcript.
 - YouTube has different ways to show a transcript,
   they can randomly change it for certain video (so it's difficult to test),
   and they can invent a new one, so it might not work for some type of transcript. 
+- Then you push button to double YouTube speed - there is no indication about it (only console.log).
+- If video doesn't have any transcript, then there are not these buttons.
 
 ## Screenshots
 
