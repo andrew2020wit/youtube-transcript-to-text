@@ -111,6 +111,30 @@ function transcriptParser() {
         result.push({time, text});
     });
 
+    if (result.length > 0) {
+        return result;
+    }
+
+    return modernTranscriptParser();
+}
+
+/**
+ * @returns {{time: string, text: string}[]} An array of transcript segments with their timestamp label and text.
+ */
+function modernTranscriptParser() {
+    const result = [];
+
+    const transcriptContainer = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id=PAmodern_transcript_view]');
+
+    const transcriptSegments = transcriptContainer.querySelectorAll("transcript-segment-view-model");
+
+    transcriptSegments.forEach(segment => {
+        const time = segment.querySelector(".ytwTranscriptSegmentViewModelTimestamp").innerText.trim();
+        const text = segment.querySelector("[role=text]").innerText.trim();
+
+        result.push({time, text});
+    });
+
     return result;
 }
 
