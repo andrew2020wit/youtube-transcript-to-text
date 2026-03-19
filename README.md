@@ -19,7 +19,7 @@ https://youtu.be/3clVUVhE4jA
 
 ## Limitations
 
-- If you go from one page to another two buttons may disappear. Reload the page in this case. 
+- If you go from one page to another then buttons may disappear. Reload the page in this case. 
 - You must click on "show video text" to see translation before click on this button.
 - YouTube has different ways to show a transcript,
   they can randomly change it for certain video (so it's difficult to test),

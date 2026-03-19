@@ -173,7 +173,7 @@ function runYoutubeTranscriptToTextExtension() {
     function modernTranscriptParser() {
         const result = [];
 
-        const transcriptContainer = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id=PAmodern_transcript_view]');
+        const transcriptContainer = document.querySelector('ytd-engagement-panel-section-list-renderer[visibility=ENGAGEMENT_PANEL_VISIBILITY_EXPANDED]');
 
         const transcriptSegments = transcriptContainer.querySelectorAll("transcript-segment-view-model");
 
