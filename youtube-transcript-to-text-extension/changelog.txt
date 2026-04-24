@@ -1,3 +1,4 @@
+2026-04-24 small improvement for changing speed
 2026-03-19 fix parser
 2026-03-08 add the double speed button
 2026-03-08 add modernTranscriptParser

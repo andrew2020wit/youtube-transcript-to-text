@@ -19,13 +19,16 @@ https://youtu.be/3clVUVhE4jA
 
 ## Limitations
 
-- If you go from one page to another then buttons may disappear. Reload the page in this case. 
-- You must click on "show video text" to see translation before click on this button.
+- If you go from one page to another, then buttons may disappear. Reload the page in this case. 
+- You must click on "show video text" to see the translation before clicking on this button.
 - YouTube has different ways to show a transcript,
   they can randomly change it for certain video (so it's difficult to test),
   and they can invent a new one, so it might not work for some type of transcript. 
-- Then you push button to double YouTube speed - there is no indication about it (only console.log).
-- If video doesn't have any transcript, then there are not these buttons.
+- If a video doesn't have any transcript, then there are not these buttons.
+- Then you push the button to double YouTube speed – there is no indication about it (only console.log).
+- Then you push the button to double YouTube speed it runs the autoreset function to prevent changing speed from other events. 
+ To turn it off, you need to reload the page.
+- If the page has more than one video player (picture in picture), then only the first one will be affected with changing speed.
 
 ## Screenshots
 

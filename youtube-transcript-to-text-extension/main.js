@@ -1,6 +1,9 @@
 runYoutubeTranscriptToTextExtension()
 
 function runYoutubeTranscriptToTextExtension() {
+    let youtubePlayerSpeed = 1;
+    let forceSpeedIsRunning = false;
+
     const idPrefix = 'youtube-transcript-to-text-extension-';
 
     const downloadHtmlElementId = idPrefix + 'download';
@@ -87,16 +90,37 @@ function runYoutubeTranscriptToTextExtension() {
 
 
         document.getElementById(singleSpeedButtonId).addEventListener("click", () => {
-            setSpeed(1)
+            setForceSpeed(1)
         });
 
         document.getElementById(speed15ButtonId).addEventListener("click", () => {
-            setSpeed(1.5)
+            setForceSpeed(1.5)
         });
 
         document.getElementById(doubleSpeedButtonId).addEventListener("click", () => {
-            setSpeed(2)
+            setForceSpeed(2)
         });
+    }
+
+    function setForceSpeed(value) {
+        console.log('setForceSpeed: ', value);
+        youtubePlayerSpeed = value;
+
+        if(forceSpeedIsRunning) {
+            return;
+        }
+
+        forceSpeedIsRunning = true;
+
+        autoResetSpeed();
+    }
+
+    function autoResetSpeed() {
+        setSpeed(youtubePlayerSpeed);
+
+        setTimeout(() => {
+            autoResetSpeed();
+        }, 200)
     }
 
     function setSpeed(value) {
@@ -104,9 +128,8 @@ function runYoutubeTranscriptToTextExtension() {
 
         if (video) {
             video.playbackRate = value;
-            console.log('set video speed: ', value);
         } else {
-            console.error('doubleSpeed: video element does not exist');
+            console.error('setSpeed: video element does not exist');
         }
     }
 
