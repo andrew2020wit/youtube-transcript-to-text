@@ -12,68 +12,71 @@ function runYoutubeTranscriptToTextExtension() {
     const doubleSpeedButtonId = idPrefix + 'double-speed';
     const singleSpeedButtonId = idPrefix + 'single-speed';
     const speed15ButtonId = idPrefix + '1-5-speed';
+    const copyUrlButtonId = idPrefix + 'copy-url';
 
 
     const buttonsElementId = 'youtube-transcript-to-text-chrome-extension-buttons';
 
     const buttonsHtml = `
-          <div style="display: flex; align-items: center; gap: 8px; margin: 4px;">
-          	<div id="${reloadButtonId}" 
+          <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px;">
+          	<div id="${reloadButtonId}"  title="load transcript"
 			style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
 			</div>
 			
-			<div id="${newTabHtmlElementId}" 
+			<div id="${newTabHtmlElementId}" title="open loaded transcript in new tab"
 			style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v80H200v560h560v-240h80v240q0 33-23.5 56.5T760-120H200Zm440-400v-120H520v-80h120v-120h80v120h120v80H720v120h-80Z"/></svg>
 			</div>
     
-    		<div id="${downloadHtmlElementId}" 
+    		<div id="${downloadHtmlElementId}" title="download loaded transcript"
     		style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg>
 			</div>
 			
-			<div id="${singleSpeedButtonId}" 
+            <div id="${copyUrlButtonId}" title="copy to clipboard cleared current video url"
+    		style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
+               <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>
+			</div>
+			
+			<div id="${singleSpeedButtonId}" title="set playback speed to 1"
     		style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-280v-320h-80v-80h160v400h-80Zm174 0 126-212-114-188h94l66 110 68-110h92L634-492l126 212h-94l-80-134-80 134h-92Z"/></svg>
 			</div>
 			
-            <div id="${speed15ButtonId}" 
+            <div id="${speed15ButtonId}" title="set playback speed to 1.5"
     		style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-280v-80h80v80h-80Zm-120 0v-320H40v-80h160v400h-80Zm500 0 120-200-120-200h80l80 133 80-133h80L820-480l120 200h-80l-80-133-80 133h-80Zm-260 0v-80h140v-80H360v-240h220v80H440v80h60q33 0 56.5 23.5T580-440v80q0 33-23.5 56.5T500-280H360Z"/></svg>
 			</div>
 			
-			<div id="${doubleSpeedButtonId}" 
+			<div id="${doubleSpeedButtonId}" title="set playback speed to 2"
     		style="cursor: pointer; width: 24px; height: 24px; display: block; fill: currentcolor;">
                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M200-280v-160q0-33 23.5-56.5T280-520h80v-80H200v-80h160q33 0 56.5 23.5T440-600v80q0 33-23.5 56.5T360-440h-80v80h160v80H200Zm280 0 120-200-120-200h80l80 133 80-133h80L680-480l120 200h-80l-80-133-80 133h-80Z"/></svg>
 			</div>
           </div>
 `;
 
-    new MutationObserver(function (mutationsList, observer) {
-        for (const mutation of mutationsList) {
-            if (mutation.target.getAttribute("target-id") !== "engagement-panel-searchable-transcript") {
-                continue;
-            }
-
-            addButtons();
-
-            observer.disconnect();
-        }
-    }).observe(document.body, {childList: true, subtree: true});
+    setInterval(addButtons, 1000);
 
     function addButtons() {
         const oldButtonsElement = document.getElementById(buttonsElementId);
+
         if (oldButtonsElement) {
-            oldButtonsElement.remove();
+            return;
+        }
+
+        const titleElement = document.querySelector('ytd-watch-metadata #title');
+
+        if (!titleElement) {
+            return;
         }
 
         const buttonsElement = document.createElement("div");
         buttonsElement.id = buttonsElementId;
 
-        const buttonsContainer = document.getElementById('panels');
 
-        buttonsContainer.prepend(buttonsElement);
+        titleElement.before(buttonsElement);
+
         buttonsElement.insertAdjacentHTML("beforeend", buttonsHtml);
 
         document.getElementById(reloadButtonId).addEventListener("click", () => {
@@ -88,6 +91,9 @@ function runYoutubeTranscriptToTextExtension() {
             clickToNewTab();
         });
 
+        document.getElementById(copyUrlButtonId).addEventListener("click", () => {
+            copyUrl();
+        });
 
         document.getElementById(singleSpeedButtonId).addEventListener("click", () => {
             setForceSpeed(1)
@@ -100,6 +106,25 @@ function runYoutubeTranscriptToTextExtension() {
         document.getElementById(doubleSpeedButtonId).addEventListener("click", () => {
             setForceSpeed(2)
         });
+    }
+
+    function copyUrl() {
+        const url = new URL(window.location.href);
+
+        // keep only the "v" query param
+        const videoId = url.searchParams.get('v');
+
+        url.search = '';
+
+        if (videoId) {
+            url.searchParams.set('v', videoId);
+        }
+
+        const cleanedUrl = url.toString();
+
+        navigator.clipboard.writeText(cleanedUrl);
+
+        console.log(cleanedUrl);
     }
 
     function setForceSpeed(value) {
@@ -161,6 +186,10 @@ function runYoutubeTranscriptToTextExtension() {
     function getTranscript() {
         const transcriptObjects = transcriptParser();
 
+        if (!transcriptObjects?.length) {
+            alert('Transcript not found. Maybe you should load the transcript first.');
+        }
+
         const chaptersObjs = chaptersParser();
 
         return joinData(zipTranscript(transcriptObjects), chaptersObjs);
@@ -197,6 +226,10 @@ function runYoutubeTranscriptToTextExtension() {
         const result = [];
 
         const transcriptContainer = document.querySelector('ytd-engagement-panel-section-list-renderer[visibility=ENGAGEMENT_PANEL_VISIBILITY_EXPANDED]');
+
+        if (!transcriptContainer) {
+            return [];
+        }
 
         const transcriptSegments = transcriptContainer.querySelectorAll("transcript-segment-view-model");
 

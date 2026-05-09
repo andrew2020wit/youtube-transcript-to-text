@@ -2,6 +2,10 @@
 
 https://youtu.be/3clVUVhE4jA
 
+This is a YouTube extension that was originally created for exporting subtitles to a text file,
+but over time its functionality has changed somewhat.
+Now it's an extension with several features that I sometimes use.
+
 ## Chrome extension: Save YouTube Transcript as a formated text file
 
 [chromewebstore](https://chromewebstore.google.com/detail/save-youtube-transcript-a/cmahblfkoacaigpfdefeoapecbccogoo)
@@ -12,22 +16,16 @@ https://youtu.be/3clVUVhE4jA
 
 ## Functionality
 
-- Save YouTube Transcript as a formated text file (md file, you can use any text editor, or Visual Studio Code)
+- Add the load transcription button (you have to load transcript before work with it)
 - Open the transcript into a new tab to read it more conveniently
-- Add the load transcription button
-- add a button to double YouTube speed
+- Save YouTube Transcript as a formated text file (md file, you can use any text editor, or Visual Studio Code)
+- Add a button to double YouTube speed
+- Add a button to copy the cleared url to clipboard (without the time and playlist)
 
 ## Limitations
 
-- If you go from one page to another, then buttons may disappear. Reload the page in this case. 
-- You must click on "show video text" to see the translation before clicking on this button.
-- YouTube has different ways to show a transcript,
-  they can randomly change it for certain video (so it's difficult to test),
-  and they can invent a new one, so it might not work for some type of transcript. 
-- If a video doesn't have any transcript, then there are not these buttons.
-- Then you push the button to double YouTube speed – there is no indication about it (only console.log).
 - Then you push the button to double YouTube speed it runs the autoreset function to prevent changing speed from other events. 
- To turn it off, you need to reload the page.
+ To turn it off, you need to reload the page. Or set another speed.
 - If the page has more than one video player (picture in picture), then only the first one will be affected with changing speed.
 
 ## Screenshots

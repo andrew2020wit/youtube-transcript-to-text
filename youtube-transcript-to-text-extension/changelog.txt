@@ -1,3 +1,8 @@
+2026-05-09 v 5.0.0
+    Changed how to show buttons; it's always visible now before the title in the description.
+    Added tooltips to the buttons.
+    Added the "copy to clipboard cleared current url" button. (without list information)
+    Added alert for empty transcript.
 2026-04-24 small improvement for changing speed
 2026-03-19 fix parser
 2026-03-08 add the double speed button
