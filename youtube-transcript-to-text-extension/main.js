@@ -13,7 +13,7 @@ function runYoutubeTranscriptToTextExtension() {
     const singleSpeedButtonId = idPrefix + 'single-speed';
     const speed15ButtonId = idPrefix + '1-5-speed';
     const copyUrlButtonId = idPrefix + 'copy-url';
-
+    const defaultTranscriptFontSize = '16px';
 
     const buttonsElementId = 'youtube-transcript-to-text-chrome-extension-buttons';
 
@@ -131,7 +131,7 @@ function runYoutubeTranscriptToTextExtension() {
         console.log('setForceSpeed: ', value);
         youtubePlayerSpeed = value;
 
-        if(forceSpeedIsRunning) {
+        if (forceSpeedIsRunning) {
             return;
         }
 
@@ -180,6 +180,8 @@ function runYoutubeTranscriptToTextExtension() {
         }
 
         button.click();
+
+        setTimeout(()=> openChapters(), 2000);
     }
 
 // @returns {{isChapter: boolean, chapterId?: number, time: string, timeSecond: number, text: string, link: string}[]}
@@ -304,10 +306,10 @@ function runYoutubeTranscriptToTextExtension() {
 
         chapters.forEach(chapter => {
             const link = chapter.querySelector("a#endpoint")?.getAttribute("href")?.trim();
-            const text = chapter.querySelector("div#details h4")?.innerText.trim();
+            const text = chapter.querySelector("div#details [title]:not([hidden])")?.innerText.trim();
             const time = chapter.querySelector("div#details div#time")?.innerText.trim();
 
-            result.push({link, text, time});
+            result.push({link, text: text || time, time});
         });
 
         return result;
@@ -500,6 +502,40 @@ function runYoutubeTranscriptToTextExtension() {
         return (times.at(-3) || 0) * 60 * 60 + (times.at(-2) || 0) * 60 + times.at(-1); // hours / minutes / seconds
     }
 
+    function addStyles() {
+        const transcriptFontSizeLSKey = 'transcriptFontSizeYtExt';
+        const style = document.createElement('style');
+
+        const setFontSizeStyle = (fontSize) => {
+            const transcriptFontSize = fontSize || defaultTranscriptFontSize;
+            style.textContent = `
+            ytd-transcript-segment-renderer yt-formatted-string {
+                font-size: ${transcriptFontSize} !important;
+                line-height: 1.2;
+            }
+            `;
+        };
+
+        setFontSizeStyle('20px');
+        document.head.appendChild(style);
+
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.get([transcriptFontSizeLSKey], (result) => {
+                if (result && result[transcriptFontSizeLSKey]) {
+                    setFontSizeStyle(result[transcriptFontSizeLSKey]);
+                }
+            });
+
+            if (chrome.storage.onChanged) {
+                chrome.storage.onChanged.addListener((changes, areaName) => {
+                    if (areaName === 'local' && changes[transcriptFontSizeLSKey]) {
+                        setFontSizeStyle(changes[transcriptFontSizeLSKey].newValue);
+                    }
+                });
+            }
+        }
+    }
+
     /**
      * @returns {string}
      */
@@ -514,5 +550,19 @@ function runYoutubeTranscriptToTextExtension() {
 
         return baseUrl;
     }
+
+    function openChapters() {
+        const transcriptContainer = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id=engagement-panel-searchable-transcript]');
+
+        const chaptersButton = transcriptContainer.querySelector('#header #subheader button');
+
+        if (!chaptersButton) {
+            return;
+        }
+
+        chaptersButton.click();
+    }
+
+    addStyles();
 }
 

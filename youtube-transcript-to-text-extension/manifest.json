@@ -1,9 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Save YouTube Transcript as a formated text",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "description": "Save YouTube Transcript as a formated text file",
-  "permissions": ["clipboardWrite"],
+  "permissions": ["clipboardWrite", "storage"],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "options_page": "options.html",
   "icons": {
     "48": "icons/icon-48.png"
   },

@@ -1,3 +1,8 @@
+2026-09-06 v 6.0.0
+    It trys to open chapters in the transcript panel.
+    Transcript font-size: 16px by default.
+    Settings: add transcript font-size.
+    Fix undefined title name (chapters).
 2026-05-09 v 5.0.0
     Changed how to show buttons; it's always visible now before the title in the description.
     Added tooltips to the buttons.
