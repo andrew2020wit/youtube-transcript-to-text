@@ -22,10 +22,12 @@ Now it's an extension with several features that I sometimes use.
 - Add a button to double YouTube speed
 - Add a button to copy the cleared url to clipboard (without the time and playlist)
 
+If you turn it on, it will reset the speed for the video player, so you can set speed only with this extension.
+
+It remembers the speed and restores it when you reload the page (up to 50 channels).
+
 ## Limitations
 
-- Then you push the button to double YouTube speed it runs the autoreset function to prevent changing speed from other events. 
- To turn it off, you need to reload the page. Or set another speed.
 - If the page has more than one video player (picture in picture), then only the first one will be affected with changing speed.
 
 ## Screenshots

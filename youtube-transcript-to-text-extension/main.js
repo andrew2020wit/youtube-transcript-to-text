@@ -2,7 +2,7 @@ runYoutubeTranscriptToTextExtension()
 
 function runYoutubeTranscriptToTextExtension() {
     let youtubePlayerSpeed = 1;
-    let forceSpeedIsRunning = false;
+    let lastChannelName = null;
 
     const idPrefix = 'youtube-transcript-to-text-extension-';
 
@@ -16,6 +16,9 @@ function runYoutubeTranscriptToTextExtension() {
     const defaultTranscriptFontSize = '16px';
 
     const buttonsElementId = 'youtube-transcript-to-text-chrome-extension-buttons';
+    const channelSpeedLSKey = idPrefix + 'channel-speed-data';
+    const activeButtonClass = idPrefix + 'active-button';
+    const speeds = [1, 1.5, 2];
 
     const buttonsHtml = `
           <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px;">
@@ -95,17 +98,15 @@ function runYoutubeTranscriptToTextExtension() {
             copyUrl();
         });
 
-        document.getElementById(singleSpeedButtonId).addEventListener("click", () => {
-            setForceSpeed(1)
+        speeds.forEach(speed => {
+            const speedButton = getSpeedButtonElement(speed);
+
+            speedButton.addEventListener("click", () => {
+                setSpeed(speed);
+            });
         });
 
-        document.getElementById(speed15ButtonId).addEventListener("click", () => {
-            setForceSpeed(1.5)
-        });
-
-        document.getElementById(doubleSpeedButtonId).addEventListener("click", () => {
-            setForceSpeed(2)
-        });
+        restoreActiveSpeedButtonClass();
     }
 
     function copyUrl() {
@@ -127,34 +128,16 @@ function runYoutubeTranscriptToTextExtension() {
         console.log(cleanedUrl);
     }
 
-    function setForceSpeed(value) {
-        console.log('setForceSpeed: ', value);
-        youtubePlayerSpeed = value;
-
-        if (forceSpeedIsRunning) {
-            return;
-        }
-
-        forceSpeedIsRunning = true;
-
-        autoResetSpeed();
-    }
-
-    function autoResetSpeed() {
-        setSpeed(youtubePlayerSpeed);
-
-        setTimeout(() => {
-            autoResetSpeed();
-        }, 200)
-    }
-
-    function setSpeed(value) {
+    /**
+     * @param {number} value
+     */
+    function setSpeedForVideoElement(value) {
         const video = document.querySelector('video');
 
         if (video) {
             video.playbackRate = value;
         } else {
-            console.error('setSpeed: video element does not exist');
+            console.error('setSpeedForVideoElement: video element does not exist');
         }
     }
 
@@ -204,6 +187,10 @@ function runYoutubeTranscriptToTextExtension() {
         const result = [];
 
         const transcriptContainer = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id=engagement-panel-searchable-transcript]');
+
+        if (!transcriptContainer) {
+            return modernTranscriptParser();
+        }
 
         const transcriptSegments = transcriptContainer.querySelectorAll("div#segments-container ytd-transcript-segment-renderer");
 
@@ -354,45 +341,60 @@ function runYoutubeTranscriptToTextExtension() {
     }
 
     /**
+     * @param {string} value
+     * @returns {string}
+     */
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+        }[char]));
+    }
+
+    /**
      * @param {{isChapter: boolean, chapterId?: number, time: string, timeSecond: number, text: string, link: string}[]} data
      * @returns {string}
      */
     function makeHtml(data) {
         const baseUrl = getBaseUrl();
+        const title = escapeHtml(document.title);
 
         let html = `<!doctype html>
         <html><head> <meta charset="UTF-8">
-        
+
         <meta name="viewport" content="width=device-width">
-          
-        <title> ${document.title} </title>
+
+        <title> ${title} </title>
         <style>
-        
+
         body {
             margin: auto;
             max-width: 600px;
             font-family: "Segoe UI", roboto, verdana, sans-serif;
             background-color: hsl(0 0% 90%);
         }
-        
+
         p {
             margin: 8px 0;
         }
-        
+
         .time {
             color: #888;
             font-size: small;
         }
-        
+
         .text {
             font-size: large;
         }
-        
+
         </style>
 
         </head><body class="youtube-transcript-to-text-extension">`;
 
-        html += `<h1> <a href="${baseUrl}" target="_blank"> ${document.title} </a> </h1>`;
+        html += `<h1> <a href="${baseUrl}" target="_blank"> ${title} </a> </h1>`;
 
         const hostname = window.location.hostname;
 
@@ -405,7 +407,7 @@ function runYoutubeTranscriptToTextExtension() {
         if (chapters.length > 0) {
             html += `<ol class="page-navigation">`;
             chapters.forEach((chapter) => {
-                html += `<li> <a href="#${chapterIdPrefix + chapter.chapterId}"> ${chapter.time + ': ' + chapter.text}</a> </li>`
+                html += `<li> <a href="#${chapterIdPrefix + chapter.chapterId}"> ${escapeHtml(chapter.time + ': ' + chapter.text)}</a> </li>`
             })
 
             html += `</ol>`;
@@ -414,10 +416,10 @@ function runYoutubeTranscriptToTextExtension() {
         // main part
         data.forEach((item, index) => {
             if (item.isChapter) {
-                html += `<h2 id="${chapterIdPrefix + item.chapterId}"> <a href="https://${hostname + item.link}" target="_blank"> ${item.text} </a></h2>`;
+                html += `<h2 id="${chapterIdPrefix + item.chapterId}"> <a href="https://${hostname + escapeHtml(item.link)}" target="_blank"> ${escapeHtml(item.text)} </a></h2>`;
             } else {
-                html += `<p class="time"> <a href="${baseUrl + '&t=' + item.timeSecond}s" target="_blank"> [${item.time || 0}] </a></p>`;
-                html += `<p class="text">${item.text}</p>`;
+                html += `<p class="time"> <a href="${baseUrl + '&t=' + item.timeSecond}s" target="_blank"> [${escapeHtml(item.time || 0)}] </a></p>`;
+                html += `<p class="text">${escapeHtml(item.text)}</p>`;
             }
         })
 
@@ -513,6 +515,10 @@ function runYoutubeTranscriptToTextExtension() {
                 font-size: ${transcriptFontSize} !important;
                 line-height: 1.2;
             }
+            
+            .${activeButtonClass} {
+                background-color: hsla(100 16 45 / 0.47);
+            }
             `;
         };
 
@@ -554,6 +560,10 @@ function runYoutubeTranscriptToTextExtension() {
     function openChapters() {
         const transcriptContainer = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id=engagement-panel-searchable-transcript]');
 
+        if (!transcriptContainer) {
+            return;
+        }
+
         const chaptersButton = transcriptContainer.querySelector('#header #subheader button');
 
         if (!chaptersButton) {
@@ -563,6 +573,150 @@ function runYoutubeTranscriptToTextExtension() {
         chaptersButton.click();
     }
 
+    /**
+     * @returns {string|undefined}
+     */
+    function getCurrentChannelName() {
+        const channelNameElement = document.querySelector('ytd-watch-metadata ytd-channel-name a');
+
+        return channelNameElement?.textContent.trim() || undefined;
+    }
+
+    /**
+     * @returns {{channelName: string, speed: number}[]}
+     */
+    function getSpeedLSDate() {
+        const dataLS = localStorage.getItem(channelSpeedLSKey);
+
+        if (!dataLS) {
+            return [];
+        }
+
+        let data;
+
+        try {
+            data = JSON.parse(dataLS);
+        } catch (e) {
+            return [];
+        }
+
+        if (!Array.isArray(data)) {
+            return [];
+        }
+
+        return data.filter(item => !!item?.channelName && !!item?.speed)
+    }
+
+    /**
+     * @param {number} speed
+     */
+    function saveSpeedForCurrentChannel(speed) {
+        const currentChannelName = getCurrentChannelName();
+
+        if (!currentChannelName || !speed) {
+            return;
+        }
+
+        const currentSpeedData = getSpeedLSDate();
+
+        const maxDataLength = 50;
+
+        const speedData = currentSpeedData.filter(item => item.channelName !== currentChannelName).slice(0, maxDataLength - 1);
+
+        const newSpeedData = [ { channelName: currentChannelName, speed }, ...speedData];
+
+        localStorage.setItem(channelSpeedLSKey, JSON.stringify(newSpeedData));
+    }
+
+    /**
+     * @returns {void}
+     */
+    function restoreSpeedForCurrentChannel() {
+        const currentChannelName = getCurrentChannelName();
+
+        if (!currentChannelName) {
+            return;
+        }
+
+        const currentSpeedData = getSpeedLSDate();
+
+        const speedData = currentSpeedData.find(item => item.channelName === currentChannelName);
+
+        youtubePlayerSpeed = speedData?.speed || 1;
+        setActiveSpeedButtonClass(youtubePlayerSpeed);
+    }
+
+    /**
+     * @param {number} value
+     */
+    function setSpeed(value) {
+        youtubePlayerSpeed = value;
+        setActiveSpeedButtonClass(value);
+        saveSpeedForCurrentChannel(value);
+    }
+
+    /**
+     * @returns {void}
+     */
+    function autoResetSpeed() {
+        const currentChannelName = getCurrentChannelName();
+
+        if (currentChannelName !== lastChannelName) {
+            lastChannelName = currentChannelName;
+            restoreSpeedForCurrentChannel();
+        }
+
+        setSpeedForVideoElement(youtubePlayerSpeed);
+
+        setTimeout(() => {
+            autoResetSpeed();
+        }, 200)
+    }
+
+    /**
+     * @param {number} speed
+     * @returns {HTMLElement|null}
+     */
+    function getSpeedButtonElement(speed) {
+        switch (speed) {
+            case 1:
+                return document.getElementById(singleSpeedButtonId);
+            case 1.5:
+                return document.getElementById(speed15ButtonId);
+            case 2:
+                return document.getElementById(doubleSpeedButtonId);
+            default:
+                console.error("getSpeedButtonElement: Invalid speed value");
+                return null;
+        }
+    }
+
+    /**
+     * @returns {(HTMLElement)[]}
+     */
+    function getAllSpeedButtonElements() {
+        return speeds.map(speed => getSpeedButtonElement(speed)).filter(btn => btn);
+    }
+
+    /**
+     * @param {number} speed
+     */
+    function setActiveSpeedButtonClass(speed) {
+        getAllSpeedButtonElements().forEach(btn => btn?.classList.remove(activeButtonClass));
+
+        getSpeedButtonElement(speed)?.classList.add(activeButtonClass);
+    }
+
+    /**
+     * @returns {void}
+     */
+    function restoreActiveSpeedButtonClass() {
+        setActiveSpeedButtonClass(youtubePlayerSpeed);
+    }
+
     addStyles();
+    lastChannelName = getCurrentChannelName();
+    restoreSpeedForCurrentChannel();
+    autoResetSpeed();
 }
 

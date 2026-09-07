@@ -1,3 +1,6 @@
+2026-09-07 v 7.0.0
+    Remembers the last speed for the last 50 channels. Auto restore speed on reload.
+    Highlight the current speed button.
 2026-09-06 v 6.0.0
     It trys to open chapters in the transcript panel.
     Transcript font-size: 16px by default.
